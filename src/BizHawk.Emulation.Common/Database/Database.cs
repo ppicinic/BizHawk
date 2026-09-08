@@ -275,6 +275,30 @@ namespace BizHawk.Emulation.Common
 
 		public static GameInfo GetGameInfo(byte[] romData, string fileName)
 		{
+			var game = LookUpGameInfo(romData, fileName);
+			// Recorded on every path, whether the database knew the ROM or not, so anything naming a
+			// file after the game can use the file it was actually loaded from. A database hit returns
+			// one canonical title for every copy of a ROM, which is how several instances of one game
+			// end up sharing a single save file.
+			game.FileName = RomFileName(fileName);
+			return game;
+		}
+
+		/// <summary>
+		/// The bare name of a ROM file, fit to build a filename from. Callers pass whatever HawkFile
+		/// called it, which for something inside an archive is "archive.zip|member.gba" -- the member
+		/// is what identifies it, and keeping the whole thing would put a '|' in a filename.
+		/// </summary>
+		private static string RomFileName(string fileName)
+		{
+			if (string.IsNullOrWhiteSpace(fileName)) return null;
+			var member = fileName.LastIndexOf('|');
+			if (member >= 0) fileName = fileName.Substring(member + 1);
+			return Path.GetFileNameWithoutExtension(fileName);
+		}
+
+		private static GameInfo LookUpGameInfo(byte[] romData, string fileName)
+		{
 			var hashSHA1 = SHA1Checksum.ComputeDigestHex(romData);
 
 #if !BIZHAWKBUILD_GAMEDB_ALWAYS_MISS

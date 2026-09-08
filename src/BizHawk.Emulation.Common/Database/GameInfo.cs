@@ -10,6 +10,14 @@ namespace BizHawk.Emulation.Common
 	public interface IGameInfo
 	{
 		string Name { get; }
+
+		/// <value>
+		/// The ROM file this was loaded from, without directory or extension, or null when it did not
+		/// come from a file. Distinct from <see cref="Name"/>, which is the database's canonical title
+		/// and is therefore shared by every copy of one ROM.
+		/// </value>
+		string FileName { get; }
+
 		string System { get; }
 
 		/// <value>either CRC32, MD5, or SHA1, hex-encoded, unprefixed</value>
@@ -25,6 +33,7 @@ namespace BizHawk.Emulation.Common
 	public class GameInfo : IGameInfo
 	{
 		public string Name { get; set; }
+		public string FileName { get; set; }
 		public string System { get; set; }
 		public string Hash { get; set; }
 		public string Region { get; set; }

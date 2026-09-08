@@ -77,15 +77,17 @@ namespace BizHawk.Client.Common
 		private static readonly Regex EnvironmentTokenPattern = new(@"%([A-Za-z_][A-Za-z0-9_]*)%", RegexOptions.Compiled);
 
 		/// <summary>
-		/// Substitutes %NAME% in a configured path with the environment variable of that name.
-		///
+		/// <para>Substitutes %NAME% in a configured path with the environment variable of that name.</para>
+		/// <para>
 		/// This lets several instances launched from one install write to separate directories without
 		/// each needing its own config: the launcher sets the variable per process. Runs after the
 		/// %exe%, %rom% and %recent% tokens, which return before reaching here, so those keep their
 		/// meaning even if a variable happens to share the name.
-		///
+		/// </para>
+		/// <para>
 		/// A name with no matching variable resolves to nothing rather than being left in the path,
 		/// so a config using this still works when launched by hand with nothing set.
+		/// </para>
 		/// </summary>
 		private static string ExpandEnvironmentTokens(string path)
 			=> path.IndexOf('%') < 0
@@ -251,7 +253,14 @@ namespace BizHawk.Client.Common
 
 		public static string SaveRamAbsolutePath(this PathEntryCollection collection, IGameInfo game, IMovie movie)
 		{
-			var name = game.FilesystemSafeName();
+			// Named after the ROM file rather than the database's title for it. Those titles are
+			// canonical per game, so byte-identical copies of one ROM -- how several instances of a
+			// game get their own save -- all resolved to one save file and overwrote each other.
+			// A ROM the database does not know already behaved this way; this makes it the rule.
+			// Falls back to the title when there is no file, which covers archives and the cores that
+			// load without one. Only Save RAM is affected: savestates, screenshots and movies keep
+			// the title, where a canonical name is what you want.
+			var name = string.IsNullOrWhiteSpace(game.FileName) ? game.FilesystemSafeName() : game.FileName;
 			if (movie.IsActive())
 			{
 				name += $".{Path.GetFileNameWithoutExtension(movie.Filename)}";

@@ -1,4 +1,5 @@
-using System.IO;
+﻿using System.IO;
+using System.Text.RegularExpressions;
 using BizHawk.Common;
 using BizHawk.Common.PathExtensions;
 using BizHawk.Common.StringExtensions;
@@ -70,8 +71,26 @@ namespace BizHawk.Client.Common
 		{
 			// warning: supposedly Path.GetFullPath accesses directories (and needs permissions)
 			// if this poses a problem, we need to paste code from .net or mono sources and fix them to not pose problems, rather than homebrew stuff
-			return Path.GetFullPath(collection.AbsolutePathForInner(path, systemId));
+			return Path.GetFullPath(ExpandEnvironmentTokens(collection.AbsolutePathForInner(path, systemId)));
 		}
+
+		private static readonly Regex EnvironmentTokenPattern = new(@"%([A-Za-z_][A-Za-z0-9_]*)%", RegexOptions.Compiled);
+
+		/// <summary>
+		/// Substitutes %NAME% in a configured path with the environment variable of that name.
+		///
+		/// This lets several instances launched from one install write to separate directories without
+		/// each needing its own config: the launcher sets the variable per process. Runs after the
+		/// %exe%, %rom% and %recent% tokens, which return before reaching here, so those keep their
+		/// meaning even if a variable happens to share the name.
+		///
+		/// A name with no matching variable resolves to nothing rather than being left in the path,
+		/// so a config using this still works when launched by hand with nothing set.
+		/// </summary>
+		private static string ExpandEnvironmentTokens(string path)
+			=> path.IndexOf('%') < 0
+				? path
+				: EnvironmentTokenPattern.Replace(path, match => Environment.GetEnvironmentVariable(match.Groups[1].Value) ?? string.Empty);
 
 		private static string AbsolutePathForInner(this PathEntryCollection collection,  string path, string systemId)
 		{

@@ -31,9 +31,9 @@ namespace BizHawk.Client.Common
 		public int AxisValue(string name)
 			=> _axisOverrides.TryGetValue(name, out var i) ? i : Source.AxisValue(name);
 
-		public IReadOnlyCollection<(string Name, int Strength)> GetHapticsSnapshot() => throw new NotImplementedException(); // no idea --yoshi
+		public IReadOnlyCollection<(string Name, int Strength)> GetHapticsSnapshot() => Source.GetHapticsSnapshot();
 
-		public void SetHapticChannelStrength(string name, int strength) => throw new NotImplementedException(); // no idea --yoshi
+		public void SetHapticChannelStrength(string name, int strength) => Source.SetHapticChannelStrength(name, strength);
 
 		public void SetAxis(string name, int value)
 			=> _axisOverrides[name] = value;
